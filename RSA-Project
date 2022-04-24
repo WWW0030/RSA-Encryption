@@ -1,0 +1,304 @@
+--Encryption
+
+package Unit1;
+import java.util.*;
+//ICS4UP Howe Wang 9/27/2020
+//A program which can encrypt the user's file with RSA encryption
+import java.io.*;
+public class encrypt2 {
+	public static void main(String []args) throws IOException {
+		//Define variables used to encrypt and decrypt the messages, see RSA encryption for more details
+		int p=0, q=0, n=0, t=0, e=0, d=0;
+		//import and define random from java library
+		Random rSet = new Random();
+		//define and path to the two files used in the program, one for input, the other output
+		//The input file
+		File file = new File("C:\\Users\\howe.wang\\Desktop\\12\\APCS\\Encryption\\Input.txt");
+		BufferedReader in =  new BufferedReader(new FileReader(file));
+		//The output file
+		PrintWriter out = new PrintWriter("C:\\Users\\howe.wang\\Desktop\\12\\APCS\\Encryption\\Output.txt");
+		//define Scanner to input p and q
+		Scanner sc = new Scanner(System.in);
+		//input p
+		System.out.println("Enter p: ");
+		p=sc.nextInt();
+		//repeat the input part while the number entered is not a prime.
+		while(!isPrime(p)) {
+			System.out.println("Not a prime, please reenter: ");
+			p=sc.nextInt();
+		}
+		//input q
+		System.out.print("Enter q: ");
+		q=sc.nextInt();
+		//repeat the input part while the number entered is not a prime.
+		while(!isPrime(q)) {
+			System.out.print("Not a prime, please reenter: ");
+			q=sc.nextInt();
+		}
+		//calculate n and t respectively
+		n=p*q;
+		t = (p-1) * (q-1);
+
+		//set e as a random number (within a given parameter)
+		e = rSet.nextInt(t-2) + 2;
+		//while e does not fit the conditions, repeat the process until it does
+		while(extended_gcd(e, t)!=1) {
+			e = rSet.nextInt(t-2)+2;
+		}
+		
+		//Next, set a random value for k (within a given parameter)
+		//also calculate d given the k
+		int k=(int)rSet.nextInt(t) + 1;
+		d=(int)((1+k*t)/e);
+		//while these two does not fit the condition, reassign k until it does
+		while (k!=(int)(d*e-1)/t) {
+			k=(int)rSet.nextInt(t) + 1;
+			d=(int)((1+k*t)/e);
+		}
+		
+		//print out the important variables for the user
+		//The user would need these to decrypt the message
+		System.out.println("n: "+n);
+		System.out.println("e: "+e);
+		System.out.println("d: "+d);
+		
+		//Next, we start taking in the input file, one letter at a time
+		//while there are more inputs:
+		while(in.ready()) {
+			//take the next input
+			int input = in.read();
+			//use modpow to turn it into an encrypted number
+			int output=modPow(input, e, n);
+			//this decrypts the same value, for troubleshooting
+			int decryptedChar=modPow(output, d, n);
+			//outputs it in the output file.
+			out.println(output);
+			System.out.println(output);
+		}
+		//close the program
+		out.close();
+		System.exit(0);
+	}
+	
+	//a method to determine if an integer is prime
+	public static boolean isPrime(int num)	{
+		double numTwo = Math.sqrt(num);
+		//while it is not divisible by any integer bigger than 2 and smaller than its root, it is prime
+		for(int i=2;i<=numTwo;i++)
+		{
+			//if divisble, it is not prime
+			if(num%i==0)
+			{
+				return false;
+			}
+
+		}
+		//if nothing is returned in the for loop, then it is prime
+		return true;
+	}
+	
+	//a method used to return the modular of a power of a number.
+	public static int modPow(int b, int e, int m) {
+	   	int result = 1;
+		// multiply in this bits' contribution,
+		//while using modulus to keep result small
+	   	while (e > 0) {
+	      	if ((e & 1) == 1)
+	      		result = (result * b) % m;
+	      	e >>= 1;
+	      	b = (b * b) % m;
+	   	}
+
+	   	return result;
+	}
+	
+	//checks the gcd of two numbers
+	public static int extended_gcd(int a, int b){
+	    int x = 0, lastx = 1, y = 1, lasty = 0;
+	    while (b != 0) {
+	        int temp = b;
+	        int quotient = a / b;
+	        b = a % b;
+	        a = temp;
+
+	        temp = x;
+	        x = lastx-quotient*x;
+	        lastx = temp;
+
+	        temp = y;
+	        y = lasty-quotient*y;
+	        lasty = temp;
+       	}
+    	return a;
+	}
+
+}
+
+
+--Decryption
+
+package Unit1;
+import java.util.*;
+import java.io.*;
+//ICS4UP Howe Wang 9/27/2020
+//A program, which takes in variables n, e, d, and a file, and decrypts the file using RSA Encryption.
+public class Decryption {
+	public static void main(String []args) throws IOException {
+		//initialize the variables used in the program
+		//for each, refer to RSA Encryption for usage
+		int p=0, q=0, n=0, t=0, e=0, d=0;
+		//define random from java library
+		Random rSet = new Random();
+		//define and path to the input and output files used in the program
+		//The input file
+		File file = new File("C:\\Users\\howe.wang\\Desktop\\12\\APCS\\Decryption\\Input.txt");
+		BufferedReader in =  new BufferedReader(new FileReader(file));
+		//The output file
+		PrintWriter out = new PrintWriter("C:\\Users\\howe.wang\\Desktop\\12\\APCS\\Decryption\\Output.txt");
+		//define Scanner to input n, e, d from user input
+		Scanner sc = new Scanner(System.in);
+		//input n
+		System.out.println("Input n: ");
+		n=sc.nextInt();
+		//input e
+		System.out.println("Input e: ");
+		e=sc.nextInt();
+		//input d
+		System.out.println("Input d: ");
+		d=sc.nextInt();
+		//while there are more inputs from input file
+		while(in.ready()) {
+			//take the value of the nextline of input
+			int	input= Integer.parseInt(in.readLine());
+			//modPow it to decrypt
+			int decryptedChar=modPow(input, d, n);
+			//printout the decrypted message
+			out.print((char)decryptedChar);
+			System.out.print((char)decryptedChar);
+		}
+		
+		//close program
+		out.close();
+		System.exit(0);
+	}
+	
+	//a method used to calculate b^e mod m very quickly
+	public static int modPow(int b, int e, int m) {
+	   	int result = 1;
+		// multiply in this bits' contribution,
+		//while using modulus to keep result small
+	   	while (e > 0) {
+	      	if ((e & 1) == 1)
+	      		result = (result * b) % m;
+	      	e >>= 1;
+	      	b = (b * b) % m;
+	   	}
+
+	   	return result;
+	}
+}
+
+
+--Challenge
+
+
+package Unit1;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.PrintWriter;
+import java.util.*;
+import java.io.*;
+//ICS4UP Howe Wang 9/27/2020
+//A program which decrypt a RSA encrypted message given variables n, e by finding the private key, then decrypting the message.
+public class Challenge2 {
+	public static void main(String []args) throws IOException {
+		//define and path to the two files used in the program, one for input, one for output
+		File file = new File("C:\\Users\\howe.wang\\Desktop\\12\\APCS\\Challenge\\Input.txt");
+		PrintWriter out = new PrintWriter("C:\\Users\\howe.wang\\Desktop\\12\\APCS\\Challenge\\Output.txt");
+		BufferedReader in =  new BufferedReader(new FileReader(file));
+		//define Scanner to input n and e
+		Scanner sc = new Scanner(System.in);
+		//input n
+		System.out.println("Input n: ");
+		int n = sc.nextInt();
+		//input e
+		System.out.println("Input e: ");
+		int e = sc.nextInt();
+		//First, find p and q, since we know n is product of two prime, p and q are unique and exists
+		int p = findPrimeProduct(n);
+		int q = (int)n/p;
+		//then, find the Totient
+		int t = (p-1)*(q-1);
+		//find d with t and e
+		int d = findD(t, e);
+		//now we have d and n, we can decrypt the code
+		//while the input file has more inputs
+		while(in.ready()) {
+			//take the input
+			int input = Integer.parseInt(in.readLine());
+			//decrypt the message by modpowing
+			int output = modPow(input, d, n);
+			//printout the decrypted message
+			out.print((char)output);
+			System.out.print((char)output);
+		}
+		
+		//close the program
+		out.close();
+		System.exit(0);
+		
+	}
+	//a method used to find the two primes which products to a certain number, n
+	public static int findPrimeProduct(int n) {
+		//start at 2, and loop all the way to square root n
+		for (int i=2; i<Math.sqrt(n); i++) {
+			//if the number is prime, and is a factor of n, and its counterpart is also prime
+			if (isPrime(i)&&n%i==0&&isPrime((int)n/i)) {
+				//return the number
+				return i;
+			}
+		}
+		//if no such number is found, return -1 to let the user know
+		//this should only happen if n is incorrect
+		return -1;
+	}
+	//a method used to find d, given t and e
+	//in this case, the problem tells us d is smaller than 2^8=256
+	public static int findD(int t, int e) {
+		//start at 1, loop all the way to 256
+		for(int i=1; i<256; i++) {
+			//if the number fits the condition, return it
+			if((i*e)%t==1) {
+				return i;
+			}
+		}
+		//if no such number fits the condition, return -1 to let the user know
+		//it should only happen when there is no d smaller than the given parameter.
+		return -1;
+	}
+	//a method to find whether a number is prime
+	public static boolean isPrime(int num){
+		double numTwo = Math.sqrt(num);
+		for(int i=2;i<=numTwo;i++){
+			if(num%i==0){
+				return false;
+			}
+		}
+		return true;
+	}
+	//a method used to calculate b^e mod m very quickly
+	public static int modPow(int b, int e, int m) {
+		int result = 1;
+		// multiply in this bits' contribution,
+		//while using modulus to keep result small
+		while (e > 0) {
+			if ((e & 1) == 1) 
+				result = (result * b) % m; 
+			e >>= 1;
+			b = (b * b) % m;
+		}
+		return result;
+	}
+}
+
